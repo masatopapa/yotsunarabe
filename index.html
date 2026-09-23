@@ -4,6 +4,12 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>4つ並べゲーム</title>
+<meta name="theme-color" content="#2e4dbf">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Dela+Gothic+One&family=Zen+Maru+Gothic:wght@500;700;900&display=swap">
@@ -224,6 +230,16 @@ h1 .four{
   touch-action:manipulation;-webkit-tap-highlight-color:transparent;
 }
 .link:focus-visible{outline:3px solid var(--focus);border-radius:4px}
+/* update toast (PWA) */
+.toast{
+  position:fixed;left:16px;right:16px;bottom:calc(16px + env(safe-area-inset-bottom,0px));
+  margin:0 auto;max-width:488px;z-index:50;
+  display:flex;align-items:center;justify-content:space-between;gap:10px;
+  padding:12px 14px;border-radius:14px;
+  background:var(--text);color:var(--bg);font-size:14px;font-weight:700;
+  box-shadow:var(--shadow);
+}
+.toast .btn{min-width:0;padding:9px 14px;font-size:14px;border-color:var(--bg);background:var(--bg);color:var(--text)}
 /* rules */
 .rules{background:var(--surface);border:1.5px solid var(--line);border-radius:14px;padding:10px 14px}
 .rules summary{cursor:pointer;font-weight:900;font-size:15px;padding:4px 0}
@@ -302,6 +318,7 @@ h1 .four{
     <div class="examples" id="examples"></div>
   </details>
 </div>
+<div class="toast" id="updToast" hidden role="status"><span>新しいバージョンがあります</span><button type="button" class="btn" id="updBtn">更新する</button></div>
 
 <script>
 (function(){
@@ -618,6 +635,14 @@ $('undoBtn').addEventListener('click',undo);
 $('newBtn').addEventListener('click',function(){newGame();});
 $('resetScore').addEventListener('click',function(){S.scores={r:0,y:0,d:0};render(false);save();});
 
+/* ---- 新版の通知 (PWA) : 対局中でなければそのまま読み込み直す ---- */
+window.addEventListener('app-update',function(){
+  var midGame=S.history.length>0&&!S.over;
+  if(!midGame){location.reload();return;}
+  $('updToast').hidden=false;
+});
+$('updBtn').addEventListener('click',function(){location.reload();});
+
 /* ---- persistence / boot ---- */
 function save(){try{localStorage.setItem(KEY,JSON.stringify(S));}catch(e){}}
 function valid(d){return d&&d.board&&d.board.length===TOTAL&&d.history&&d.scores;}
@@ -632,6 +657,41 @@ function boot(data){
 var hot=window.claude&&window.claude.hot;
 if(hot&&hot.snapshot)hot.snapshot(function(){return S;});
 if(hot&&hot.ready)hot.ready(boot);else boot(hot&&hot.data?hot.data:{});
+})();
+</script>
+<script>
+/* PWA: オフライン用のService Worker登録 + 前面に戻ったとき新版を確認 (https のときだけ動く) */
+(function(){
+  if(!('serviceWorker' in navigator))return;
+  if(location.protocol!=='https:'&&location.hostname!=='localhost')return;
+  var VKEY='yotsu-narabe-etag',reg=null,baseline=null,checking=false,last=0;
+  navigator.serviceWorker.register('sw.js').then(function(r){reg=r;}).catch(function(){});
+  function stamp(){
+    return fetch('index.html',{method:'HEAD',cache:'no-store'}).then(function(res){
+      if(!res.ok)return null;
+      return res.headers.get('etag')||res.headers.get('last-modified')||null;
+    }).catch(function(){return null;});
+  }
+  function remember(s){try{localStorage.setItem(VKEY,s);}catch(e){}}
+  stamp().then(function(s){
+    if(s){baseline=s;remember(s);}
+    else{try{baseline=localStorage.getItem(VKEY);}catch(e){}}
+  });
+  function check(){
+    var now=Date.now();
+    if(checking||navigator.onLine===false||now-last<30000)return;
+    checking=true;last=now;
+    if(reg&&reg.update)reg.update().catch(function(){});
+    stamp().then(function(s){
+      checking=false;
+      if(!s)return;
+      if(!baseline){baseline=s;remember(s);return;}
+      if(s!==baseline){baseline=s;remember(s);window.dispatchEvent(new Event('app-update'));}
+    });
+  }
+  document.addEventListener('visibilitychange',function(){if(document.visibilityState==='visible')check();});
+  window.addEventListener('online',check);
+  window.addEventListener('focus',check);
 })();
 </script>
 
