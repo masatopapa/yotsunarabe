@@ -230,6 +230,10 @@ h1 .four{
   touch-action:manipulation;-webkit-tap-highlight-color:transparent;
 }
 .link:focus-visible{outline:3px solid var(--focus);border-radius:4px}
+/* credit（ページの一番下: 作った人とプロフィールページへのリンク） */
+.credit{margin:4px 0 0;text-align:center;font-size:13px;font-weight:700;color:var(--muted)}
+.credit a{color:var(--text);text-decoration:underline;text-underline-offset:3px;-webkit-tap-highlight-color:transparent}
+.credit a:focus-visible{outline:3px solid var(--focus);border-radius:4px}
 /* update toast (PWA) */
 .toast{
   position:fixed;left:16px;right:16px;bottom:calc(16px + env(safe-area-inset-bottom,0px));
@@ -317,6 +321,7 @@ h1 .four{
     </ol>
     <div class="examples" id="examples"></div>
   </details>
+  <p class="credit">つくった人：<a href="https://mastopapa.com/profile/" target="_blank" rel="noopener">まさとパパ</a></p>
 </div>
 <div class="toast" id="updToast" hidden role="status"><span>新しいバージョンがあります</span><button type="button" class="btn" id="updBtn">更新する</button></div>
 
