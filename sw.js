@@ -3,8 +3,8 @@
 //       オンラインで開くたびに最新版を取りに行くので、HTMLを直してpushするだけで自動更新される。
 //       Webフォント(Google Fonts)は「キャッシュ優先・裏で更新」で、オフラインでも同じ見た目にする。
 // ASSETS にファイルを足したら CACHE の v番号を上げること。
-const CACHE = 'yotsunarabe-v1';
-const ASSETS = ['./', './index.html', './manifest.json', './icon-192.png', './icon-512.png', './apple-touch-icon.png'];
+const CACHE = 'yotsunarabe-v2';
+const ASSETS = ['./', './index.html', './manifest.json', './icon-192.png', './icon-512.png', './icon-maskable-192.png', './icon-maskable-512.png', './favicon-48.png', './apple-touch-icon.png'];
 const FONT_HOSTS = ['fonts.googleapis.com', 'fonts.gstatic.com'];
 
 self.addEventListener('install', (e) => {
